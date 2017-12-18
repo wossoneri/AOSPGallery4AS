@@ -51,7 +51,7 @@ Error:(33, 42) error: package com.googlecode.mp4parser.authoring does not exist
 /Oreo/external/mp4parser/isoparser/src/main/java/com
 /Oreo/external/apache-http/src/org
 ```
-12.剩下一些找不到包的小错误很好解决,主要看下最后的NDK错误.
+12. 剩下一些找不到包的小错误很好解决,主要看下最后的NDK错误.
 ```gradle
     externalNativeBuild {
         ndkBuild {
@@ -59,3 +59,16 @@ Error:(33, 42) error: package com.googlecode.mp4parser.authoring does not exist
         }
     }
 ```
+13. 运行安装时出现未知错误:
+```bash
+error Unknown failure (at android.os.Binder.execTransact(Binder.java:565)) Error while Installing APKs
+修改步骤:
+AndroidStudio
+File -> Settings -> Build, Execution, Deployment.
+Instant Run -> disable "Enable Instant Run to hot swap code/resource changes on deploy".
+Apply -> OK
+然后再运行,看到真正的错误:
+INSTALL_FAILED_NO_MATCHING_ABIS
+解决方案是: Build->Refresh linked C++ Projects
+```
+14. TBC

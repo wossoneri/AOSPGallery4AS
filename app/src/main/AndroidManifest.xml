@@ -282,7 +282,7 @@
         <uses-library android:name="com.google.android.media.effects"
                 android:required="false" />
 
-        <activity android:name="com.android.gallery3d.settings.GallerySettings"
+        <activity android:name="com.android.libs.src_pd.gallery3d.settings.GallerySettings"
                 android:theme="@style/Theme.Gallery"
                 android:configChanges="orientation|keyboardHidden|screenSize" />
 
