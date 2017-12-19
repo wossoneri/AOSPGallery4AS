@@ -164,6 +164,7 @@ public class DataManager implements StitchingChangeListener {
     }
 
     public MediaObject getMediaObject(Path path) {
+//        Log.d("WOW", "get media obj from " + path);
         synchronized (LOCK) {
             MediaObject obj = path.getObject();
             if (obj != null) return obj;

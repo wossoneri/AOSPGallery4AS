@@ -1,5 +1,8 @@
 apply plugin: 'com.android.application'
 
+// set to 'bazel', 'cmake', 'makefile', 'none'
+def nativeBuildSystem = 'none'
+
 android {
     compileSdkVersion 26
     buildToolsVersion "26.0.2"
@@ -29,6 +32,9 @@ android {
     }
 
     dependencies {
+        if (nativeBuildSystem == 'cmake' || nativeBuildSystem == 'none') {
+            compile 'org.tensorflow:tensorflow-android:+'
+        }
         compile 'com.android.support:support-v4:26.0.+'
         compile 'com.android.support:support-v13:26.0.+'
     }

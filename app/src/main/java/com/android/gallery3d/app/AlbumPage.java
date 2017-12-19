@@ -19,6 +19,8 @@ package com.android.gallery3d.app;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
@@ -32,7 +34,6 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.android.gallery3d.R;
-import com.android.libs.gallerycommon.common.Utils;
 import com.android.gallery3d.data.DataManager;
 import com.android.gallery3d.data.MediaDetails;
 import com.android.gallery3d.data.MediaItem;
@@ -55,15 +56,28 @@ import com.android.gallery3d.ui.RelativePosition;
 import com.android.gallery3d.ui.SelectionManager;
 import com.android.gallery3d.ui.SlotView;
 import com.android.gallery3d.ui.SynchronizedHandler;
-import com.android.libs.gallerycommon.util.Future;
 import com.android.gallery3d.util.GalleryUtils;
 import com.android.gallery3d.util.MediaSetUtils;
+import com.android.libs.gallerycommon.common.Utils;
+import com.android.libs.gallerycommon.util.Future;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import tfapi.Classifier;
+import tfapi.TensorFlowObjectDetectionAPIModel;
 
 
 public class AlbumPage extends ActivityState implements GalleryActionBar.ClusterRunner,
         SelectionManager.SelectionListener, MediaSet.SyncListener, GalleryActionBar.OnAlbumModeSelectedListener {
     @SuppressWarnings("unused")
     private static final String TAG = "AlbumPage";
+
+    private static final String TF_OD_API_MODEL_FILE =
+            "file:///android_asset/ssd_mobilenet_v1_android_export.pb";
+    private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/coco_labels_list.txt";
+    private static final int TF_OD_API_INPUT_SIZE = 300;
 
     public static final String KEY_MEDIA_PATH = "media-path";
     public static final String KEY_PARENT_MEDIA_PATH = "parent-media-path";
@@ -508,6 +522,50 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
         mMediaSetPath = Path.fromString(data.getString(KEY_MEDIA_PATH));
         mParentMediaSetString = data.getString(KEY_PARENT_MEDIA_PATH);
         mMediaSet = mActivity.getDataManager().getMediaSet(mMediaSetPath);
+
+        Log.d("WOW", "Total count " + mMediaSet.getMediaItemCount());
+
+        final ArrayList<MediaItem> list = mMediaSet.getMediaItem(0, mMediaSet.getMediaItemCount());
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int count = 1;
+                for (MediaItem item : list) {
+//                    Log.d("WOW", "item path is " + item.getFilePath());
+                    BitmapFactory.Options op = new BitmapFactory.Options();
+                    op.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(item.getFilePath(), op);
+                    if (Math.max(op.outHeight, op.outWidth) > 1000) {
+                        op.inSampleSize = 4;
+                        op.inPreferredConfig = Bitmap.Config.RGB_565;
+                    }
+                    op.inJustDecodeBounds = false;
+                    Bitmap bmp = BitmapFactory.decodeFile(item.getFilePath(), op);
+
+                    final Bitmap scaled = Bitmap.createScaledBitmap(bmp, 300, 300,
+                            true);
+                    try {
+                        Classifier detector = TensorFlowObjectDetectionAPIModel.create(
+                                mActivity.getAssets(), TF_OD_API_MODEL_FILE, TF_OD_API_LABELS_FILE
+                                , TF_OD_API_INPUT_SIZE);
+                        List<Classifier.Recognition> mResults = detector.recognizeImage(scaled);
+                        Classifier.Recognition recognition = mResults.get(0);
+                        Log.d("WOW", "Img num:" + count + "Got " + recognition.getTitle() +
+                                " prob is " + recognition.getConfidence() +
+                                " rect is" + recognition.getLocation().toString());
+                        count++;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+        }).start();
+
+
+
+
         if (mMediaSet == null) {
             Utils.fail("MediaSet is null. Path = %s", mMediaSetPath);
         }

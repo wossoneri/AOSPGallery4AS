@@ -192,6 +192,7 @@ public class AlbumSetPage extends ActivityState implements
 
         if (mSelectionManager.inSelectionMode()) {
             MediaSet targetSet = mAlbumSetDataAdapter.getMediaSet(slotIndex);
+            Log.d("WOW", "total photo is " + targetSet.getTotalMediaItemCount() + " path is " + targetSet.getPath());
             if (targetSet == null) return; // Content is dirty, we shall reload soon
             mSelectionManager.toggle(targetSet.getPath());
             mSlotView.invalidate();
@@ -252,17 +253,21 @@ public class AlbumSetPage extends ActivityState implements
         getSlotCenter(slotIndex, center);
         data.putIntArray(AlbumPage.KEY_SET_CENTER, center);
         if (mGetAlbum && targetSet.isLeafAlbum()) {
+            Log.d("WOW", "pick album state 1");
             Activity activity = mActivity;
             Intent result = new Intent()
                     .putExtra(AlbumPicker.KEY_ALBUM_PATH, targetSet.getPath().toString());
             activity.setResult(Activity.RESULT_OK, result);
             activity.finish();
         } else if (targetSet.getSubMediaSetCount() > 0) {
+            Log.d("WOW", "pick album state 2");
             data.putString(AlbumSetPage.KEY_MEDIA_PATH, mediaPath);
             mActivity.getStateManager().startStateForResult(
                     AlbumSetPage.class, REQUEST_DO_ANIMATION, data);
         } else {
+            Log.d("WOW", "pick album state 3");
             if (!mGetContent && albumShouldOpenInFilmstrip(targetSet)) {
+                Log.d("WOW", "start filmStripPage directly");
                 data.putParcelable(PhotoPage.KEY_OPEN_ANIMATION_RECT,
                         mSlotView.getSlotRect(slotIndex, mRootPane));
                 data.putInt(PhotoPage.KEY_INDEX_HINT, 0);
@@ -319,6 +324,7 @@ public class AlbumSetPage extends ActivityState implements
     @Override
     public void onCreate(Bundle data, Bundle restoreState) {
         super.onCreate(data, restoreState);
+        Log.d("WOW", "AlbumSetPage create");
         initializeViews();
         initializeData(data);
         Context context = mActivity.getAndroidContext();
@@ -454,6 +460,7 @@ public class AlbumSetPage extends ActivityState implements
     @Override
     public void onResume() {
         super.onResume();
+        Log.d("WOW", "AlbumSetPage resume" + android.util.Log.getStackTraceString(new Throwable()));
         mIsActive = true;
         setContentPane(mRootPane);
 
@@ -474,7 +481,7 @@ public class AlbumSetPage extends ActivityState implements
     }
 
     private void initializeData(Bundle data) {
-        String mediaPath = data.getString(AlbumSetPage.KEY_MEDIA_PATH);
+        String mediaPath = data.getString(AlbumSetPage.KEY_MEDIA_PATH); //"/combo/{/local/all,/picasa/all}"
         mMediaSet = mActivity.getDataManager().getMediaSet(mediaPath);
         mSelectionManager.setSourceMediaSet(mMediaSet);
         mAlbumSetDataAdapter = new AlbumSetDataLoader(

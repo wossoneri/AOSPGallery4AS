@@ -50,6 +50,7 @@ public class StateManager {
 
     public void startState(Class<? extends ActivityState> klass,
             Bundle data) {
+        Log.d(TAG, android.util.Log.getStackTraceString(new Throwable()));
         Log.v(TAG, "startState " + klass);
         ActivityState state = null;
         try {
@@ -70,6 +71,7 @@ public class StateManager {
         state.initialize(mActivity, data);
 
         mStack.push(new StateEntry(data, state));
+        Log.d("WOW", "Go to state onCreate");
         state.onCreate(data, null);
         if (mIsResumed) state.resume();
     }
