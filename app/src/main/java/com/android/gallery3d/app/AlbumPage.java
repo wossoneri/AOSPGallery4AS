@@ -17,8 +17,10 @@
 package com.android.gallery3d.app;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
@@ -65,8 +67,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import tfapi.Classifier;
-import tfapi.TensorFlowObjectDetectionAPIModel;
+import classification.database.ClassifyDBUtil;
+import classification.database.ClassifyProvider;
+import classification.database.ClassifySQLiteOpenHelper;
+import classification.tfapi.Classifier;
+import classification.tfapi.TensorFlowObjectDetectionAPIModel;
 
 
 public class AlbumPage extends ActivityState implements GalleryActionBar.ClusterRunner,
@@ -523,48 +528,8 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
         mParentMediaSetString = data.getString(KEY_PARENT_MEDIA_PATH);
         mMediaSet = mActivity.getDataManager().getMediaSet(mMediaSetPath);
 
-        Log.d("WOW", "Total count " + mMediaSet.getMediaItemCount());
-
-        final ArrayList<MediaItem> list = mMediaSet.getMediaItem(0, mMediaSet.getMediaItemCount());
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int count = 1;
-                for (MediaItem item : list) {
-//                    Log.d("WOW", "item path is " + item.getFilePath());
-                    BitmapFactory.Options op = new BitmapFactory.Options();
-                    op.inJustDecodeBounds = true;
-                    BitmapFactory.decodeFile(item.getFilePath(), op);
-                    if (Math.max(op.outHeight, op.outWidth) > 1000) {
-                        op.inSampleSize = 4;
-                        op.inPreferredConfig = Bitmap.Config.RGB_565;
-                    }
-                    op.inJustDecodeBounds = false;
-                    Bitmap bmp = BitmapFactory.decodeFile(item.getFilePath(), op);
-
-                    final Bitmap scaled = Bitmap.createScaledBitmap(bmp, 300, 300,
-                            true);
-                    try {
-                        Classifier detector = TensorFlowObjectDetectionAPIModel.create(
-                                mActivity.getAssets(), TF_OD_API_MODEL_FILE, TF_OD_API_LABELS_FILE
-                                , TF_OD_API_INPUT_SIZE);
-                        List<Classifier.Recognition> mResults = detector.recognizeImage(scaled);
-                        Classifier.Recognition recognition = mResults.get(0);
-                        Log.d("WOW", "Img num:" + count + "Got " + recognition.getTitle() +
-                                " prob is " + recognition.getConfidence() +
-                                " rect is" + recognition.getLocation().toString());
-                        count++;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            }
-        }).start();
-
-
-
+//        startClassify();
+        readClassify();
 
         if (mMediaSet == null) {
             Utils.fail("MediaSet is null. Path = %s", mMediaSetPath);
@@ -840,5 +805,97 @@ public class AlbumPage extends ActivityState implements GalleryActionBar.Cluster
         if (mode == GalleryActionBar.ALBUM_FILMSTRIP_MODE_SELECTED) {
             switchToFilmstrip();
         }
+    }
+
+    private void readClassify() {
+        ClassifyDBUtil.queryFullColumns(mActivity);
+//        ClassifyDBUtil.deleteByPath(mActivity, "/storage/emulated/0/classify/airplane2.jpg");
+    }
+
+    private void startClassify() {
+        Log.d("WOW", "Total count " + mMediaSet.getMediaItemCount());
+
+        final ArrayList<MediaItem> list = mMediaSet.getMediaItem(0, mMediaSet.getMediaItemCount());
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                // create DB
+                ClassifySQLiteOpenHelper dbHelper = new ClassifySQLiteOpenHelper(mActivity, "classify.db");
+                SQLiteDatabase sqLiteDatabase = dbHelper.getWritableDatabase();
+                ContentValues values = new ContentValues();
+                int count = 1;
+                for (MediaItem item : list) {
+//                    Log.d("WOW", "item path is " + item.getFilePath());
+                    BitmapFactory.Options op = new BitmapFactory.Options();
+                    op.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(item.getFilePath(), op);
+                    if (Math.max(op.outHeight, op.outWidth) > 1000) {
+                        op.inSampleSize = 4;
+                        op.inPreferredConfig = Bitmap.Config.RGB_565;
+                    }
+                    op.inJustDecodeBounds = false;
+                    Bitmap bmp = BitmapFactory.decodeFile(item.getFilePath(), op);
+
+                    final Bitmap scaled = Bitmap.createScaledBitmap(bmp, 300, 300,
+                            true);
+                    try {
+                        Classifier detector = TensorFlowObjectDetectionAPIModel.create(
+                                mActivity.getAssets(), TF_OD_API_MODEL_FILE, TF_OD_API_LABELS_FILE
+                                , TF_OD_API_INPUT_SIZE);
+                        List<Classifier.Recognition> mResults = detector.recognizeImage(scaled);
+
+                        Classifier.Recognition recognition;
+                        // same photo we use most 5 prob labels
+                        for (int index = 0; index < (mResults.size() > 5 ? 5 : mResults.size()); index++) {
+                            recognition = mResults.get(index);
+                            Log.d("WOW", "Img num:" + count + "Got " + recognition.getTitle() +
+                                    " prob is " + recognition.getConfidence() +
+                                    " rect is" + recognition.getLocation().toString());
+                            // 因为是按照可能性排序的,可能性最高排最前面
+                            // 所以第一个可能性为0时,代表没识别,只保存path,不再处理其他可能性
+                            if (index == 0) {
+                                //write DB
+                                values.clear();
+                                values.put(ClassifyProvider.Classify.PATH, item.getFilePath());
+                                if (recognition.getConfidence() > 0) {
+                                    values.put(ClassifyProvider.Classify.LABEL, recognition.getTitle());
+                                    values.put(ClassifyProvider.Classify.PROB, recognition.getConfidence());
+                                    values.put(ClassifyProvider.Classify.DATE_UPDATE, System.currentTimeMillis());
+                                    long id = sqLiteDatabase.insert(ClassifyProvider.Classify.TABLE, null, values);
+                                    Log.d("WOW", "insert id is " + id);
+                                } else { // 不需要循环了
+                                    long id = sqLiteDatabase.insert(ClassifyProvider.Classify.TABLE, null, values);
+                                    Log.d("WOW", "insert id is " + id);
+                                    break;
+                                }
+                            } else {
+                                //write DB
+                                // index>0代表已经保存过一个label了
+                                // 这时候就比较care准确度,约定prob>0.7代表可能性比较高,可以保存
+                                if (recognition.getConfidence() > 0.7) {
+                                    values.clear();
+                                    values.put(ClassifyProvider.Classify.PATH, item.getFilePath());
+                                    values.put(ClassifyProvider.Classify.LABEL, recognition.getTitle());
+                                    values.put(ClassifyProvider.Classify.PROB, recognition.getConfidence());
+                                    values.put(ClassifyProvider.Classify.DATE_UPDATE, System.currentTimeMillis());
+                                    long id = sqLiteDatabase.insert(ClassifyProvider.Classify.TABLE, null, values);
+                                    Log.d("WOW", "insert id is " + id);
+                                } else { // 只要prob不符合,后面的循环也都不符合,break
+                                    break;
+                                }
+                            }
+
+                        }
+                        count++;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                sqLiteDatabase.close();
+            }
+        }).start();
+
     }
 }

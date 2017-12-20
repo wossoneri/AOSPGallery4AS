@@ -483,6 +483,16 @@ public class AlbumSetPage extends ActivityState implements
     private void initializeData(Bundle data) {
         String mediaPath = data.getString(AlbumSetPage.KEY_MEDIA_PATH); //"/combo/{/local/all,/picasa/all}"
         mMediaSet = mActivity.getDataManager().getMediaSet(mediaPath);
+
+
+//        int mediaSetCount = mMediaSet.getSubMediaSetCount();
+//        Log.d("WOW", "media set count is " + mediaSetCount);
+//        for (int i = 0; i < mediaSetCount; i++) {
+//            MediaSet set = mMediaSet.getSubMediaSet(i);
+//            Path id = set.getPath();
+//            Log.d("WOW", "Path is " + id.toString());
+//        }
+
         mSelectionManager.setSourceMediaSet(mMediaSet);
         mAlbumSetDataAdapter = new AlbumSetDataLoader(
                 mActivity, mMediaSet, DATA_CACHE_SIZE);
@@ -725,6 +735,7 @@ public class AlbumSetPage extends ActivityState implements
                     }
                 } finally {
                     root.unlockRenderThread();
+                    Log.d("WOW", "album size " + mAlbumSetDataAdapter.size());
                 }
             }
         });
