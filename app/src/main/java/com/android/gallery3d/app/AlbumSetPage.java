@@ -34,7 +34,6 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.android.gallery3d.R;
-import com.android.libs.gallerycommon.common.Utils;
 import com.android.gallery3d.data.DataManager;
 import com.android.gallery3d.data.MediaDetails;
 import com.android.gallery3d.data.MediaItem;
@@ -43,8 +42,6 @@ import com.android.gallery3d.data.MediaSet;
 import com.android.gallery3d.data.Path;
 import com.android.gallery3d.glrenderer.FadeTexture;
 import com.android.gallery3d.glrenderer.GLCanvas;
-import com.android.libs.src_pd.gallery3d.picasasource.PicasaSource;
-import com.android.libs.src_pd.gallery3d.settings.GallerySettings;
 import com.android.gallery3d.ui.ActionModeHandler;
 import com.android.gallery3d.ui.ActionModeHandler.ActionModeListener;
 import com.android.gallery3d.ui.AlbumSetSlotRenderer;
@@ -55,8 +52,11 @@ import com.android.gallery3d.ui.GLView;
 import com.android.gallery3d.ui.SelectionManager;
 import com.android.gallery3d.ui.SlotView;
 import com.android.gallery3d.ui.SynchronizedHandler;
-import com.android.libs.gallerycommon.util.Future;
 import com.android.gallery3d.util.GalleryUtils;
+import com.android.libs.gallerycommon.common.Utils;
+import com.android.libs.gallerycommon.util.Future;
+import com.android.libs.src_pd.gallery3d.picasasource.PicasaSource;
+import com.android.libs.src_pd.gallery3d.settings.GallerySettings;
 import com.android.libs.src_pd.gallery3d.util.HelpUtils;
 
 import java.lang.ref.WeakReference;
@@ -735,7 +735,10 @@ public class AlbumSetPage extends ActivityState implements
                     }
                 } finally {
                     root.unlockRenderThread();
-                    Log.d("WOW", "album size " + mAlbumSetDataAdapter.size());
+                    int mediaSetCount = mMediaSet.getSubMediaSetCount();
+                    Log.d("WOW", "media set count is " + mediaSetCount); //相册数量
+                    Log.d("WOW", "media set count2 is " + mMediaSet.getTotalMediaItemCount());//图片数量
+                    Log.d("WOW", "media set count3 is " + mMediaSet.getMediaItemCount());//0
                 }
             }
         });
