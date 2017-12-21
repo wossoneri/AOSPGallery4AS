@@ -20,6 +20,7 @@ public class ClassifyDBUtil {
     private static String[] ClassifyColumnsFull = new String[]{
             ClassifyProvider.Classify._ID,
             ClassifyProvider.Classify.PATH,
+            ClassifyProvider.Classify.CLASS,
             ClassifyProvider.Classify.LABEL,
             ClassifyProvider.Classify.PROB,
             ClassifyProvider.Classify.DATE_UPDATE};
@@ -43,6 +44,8 @@ public class ClassifyDBUtil {
                     cursor.getInt(cursor.getColumnIndex(ClassifyProvider.Classify._ID)));
             cv.put(ClassifyProvider.Classify.PATH,
                     cursor.getString(cursor.getColumnIndex(ClassifyProvider.Classify.PATH)));
+            cv.put(ClassifyProvider.Classify.CLASS,
+                    cursor.getString(cursor.getColumnIndex(ClassifyProvider.Classify.CLASS)));
             cv.put(ClassifyProvider.Classify.LABEL,
                     cursor.getString(cursor.getColumnIndex(ClassifyProvider.Classify.LABEL)));
             cv.put(ClassifyProvider.Classify.PROB,
@@ -65,7 +68,9 @@ public class ClassifyDBUtil {
         ClassifySQLiteOpenHelper dbHelper = new ClassifySQLiteOpenHelper(context, DB_NAME);
         SQLiteDatabase sqLiteDatabase = dbHelper.getWritableDatabase();
 
-        int deleteValue = sqLiteDatabase.delete(ClassifyProvider.Classify.TABLE, ClassifyProvider.Classify.PATH + "=\"" + path + "\"", null);
+        int deleteValue = sqLiteDatabase.delete(ClassifyProvider.Classify.TABLE,
+//                ClassifyProvider.Classify.PATH + "=\"" + path + "\"", null);
+                ClassifyProvider.Classify.PATH + "=?", new String[]{path});
 
         sqLiteDatabase.close();
 //        Log.d("WOW", "delete " + deleteValue);

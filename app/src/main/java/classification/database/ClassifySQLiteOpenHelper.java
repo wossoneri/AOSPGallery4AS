@@ -20,6 +20,7 @@ public class ClassifySQLiteOpenHelper extends SQLiteOpenHelper {
     private static final String[][] CREATE_CLASSIFY = {
             {ClassifyProvider.Classify._ID, "INTEGER PRIMARY KEY AUTOINCREMENT"},
             {ClassifyProvider.Classify.PATH, "TEXT NOT NULL"},
+            {ClassifyProvider.Classify.CLASS, "TEXT"},
             {ClassifyProvider.Classify.LABEL, "TEXT"},
             {ClassifyProvider.Classify.PROB, "REAL"},
             {ClassifyProvider.Classify.DATE_UPDATE, "INTEGER"},

@@ -30,6 +30,7 @@ public class ClassifyProvider extends SQLiteContentProvider {
         public static final  Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, TABLE);
 
         public static final String PATH = "path";
+        public static final String CLASS = "class";
         public static final String LABEL = "label";
         public static final String PROB = "probability";
         public static final String DATE_UPDATE = "date_update";

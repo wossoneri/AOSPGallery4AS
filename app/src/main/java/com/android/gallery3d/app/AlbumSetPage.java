@@ -62,6 +62,8 @@ import com.android.libs.src_pd.gallery3d.util.HelpUtils;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+import classification.database.Classification;
+
 public class AlbumSetPage extends ActivityState implements
         SelectionManager.SelectionListener, GalleryActionBar.ClusterRunner,
         EyePosition.EyePositionListener, MediaSet.SyncListener {
@@ -739,6 +741,15 @@ public class AlbumSetPage extends ActivityState implements
                     Log.d("WOW", "media set count is " + mediaSetCount); //相册数量
                     Log.d("WOW", "media set count2 is " + mMediaSet.getTotalMediaItemCount());//图片数量
                     Log.d("WOW", "media set count3 is " + mMediaSet.getMediaItemCount());//0
+
+//                    Log.d("WOW", Classification.findSuperClassification("sports ball"));
+//                    Log.d("WOW", "child exist?" + Classification.checkKeyExist("child"));
+//                    Log.d("WOW", "boy exist?" + Classification.checkKeyExist("boy"));
+//                    Log.d("WOW", Classification.SPORTS.fromString("sports ball").toString());
+//                    Log.d("WOW", "" + Classification.SPORTS.contains("sports ball"));
+//
+//                    Log.d("WOW", Classification.SPORTS.fromString("frisbee").toString());
+//                    Log.d("WOW", "" + Classification.SPORTS.contains("frisbee"));
                 }
             }
         });
