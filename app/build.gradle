@@ -4,14 +4,16 @@ apply plugin: 'com.android.application'
 def nativeBuildSystem = 'none'
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion "26.0.2"
+
+    compileSdkVersion 28
+    buildToolsVersion "26.0.3"
 
     defaultConfig {
         applicationId "com.android.gallery3d"
         minSdkVersion 14
         targetSdkVersion 24
         renderscriptTargetApi 18
+        ndk.abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
 
         ndk {
             moduleName "libjni_eglfence"
@@ -33,9 +35,12 @@ android {
 
     dependencies {
         if (nativeBuildSystem == 'cmake' || nativeBuildSystem == 'none') {
-            compile 'org.tensorflow:tensorflow-android:+'
+            implementation 'org.tensorflow:tensorflow-android:+'
         }
-        compile 'com.android.support:support-v4:26.0.+'
-        compile 'com.android.support:support-v13:26.0.+'
+        implementation 'com.android.support:support-v4:28.0.0'
+        implementation 'com.android.support:support-v13:28.0.0'
+    }
+    lintOptions {
+        checkReleaseBuilds false
     }
 }
